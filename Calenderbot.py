@@ -28,21 +28,58 @@ async def server_details(ctx: SlashContext):
     await ctx.send(f'[Server Name: {ctx.guild.name}   <>   Server ID: {ctx.guild.id}] ----  [User: {ctx.author.id}]  ')
 
 @slash.slash(name="give_role", description="Give a role to someone")
-async def give_role(ctx, member: discord.Member, role: discord.Role):
-    if ctx.guild.me.guild_permissions.manage_roles:
-        await member.add_role(role)
-        await ctx.send(f'Successfully given {role.name} to {member.display_name}')
-    else:
-        await ctx.send("Permission was denied")
+async def assign_roles(ctx: SlashContext):
+    guild = ctx.guild
+    roles = guild.roles[1:]  # Exclude @everyone role
+    options = [SelectOption(role.name, str(role.id)) for role in roles]
 
-@slash.slash(name="remove_role", description="Remove a role from someone")
-async def removerole(ctx, member: discord.Member, role: discord.Role):
-    # Check if the bot has permission to manage roles
-    if ctx.guild.me.guild_permissions.manage_roles:
-        await member.remove_roles(role)
-        await ctx.send(f'Successfully removed {role.name} from {member.display_name}')
-    else:
-        await ctx.send('I do not have permission to manage roles.')
+    select_menu = SelectMenu(
+        custom_id="role_menu",
+        placeholder="Select roles",
+        options=options,
+        max_values=len(roles),  # Set maximum number of roles user can select
+        min_values=1            # Set minimum number of roles user must select
+    )
+    await ctx.send("Select the roles you want to assign:", components=[select_menu])
+
+@bot.component("role_menu")
+async def role_menu_handler(ctx: SlashContext, values: list):
+    member = ctx.author
+    guild = ctx.guild
+    for role_id in values:
+        role = discord.utils.get(guild.roles, id=int(role_id))
+        if role:
+            await member.add_roles(role)
+            await ctx.send(f"Role {role.name} assigned to {member.display_name}")
+        else:
+            await ctx.send(f"Role with ID {role_id} not found")
+
+@slash.slash(name="remove_role", description="Remove a role from yourself")
+async def remove_role(ctx: SlashContext):
+    member = ctx.author
+    roles = member.roles[1:]  # Exclude @everyone role
+    options = [SelectOption(role.name, str(role.id)) for role in roles]
+
+    select_menu = SelectMenu(
+        custom_id="remove_role_menu",
+        placeholder="Select roles to remove",
+        options=options,
+        max_values=len(roles),  # Set maximum number of roles user can select
+        min_values=1            # Set minimum number of roles user must select
+    )
+    await ctx.send("Select the roles you want to remove:", components=[select_menu])
+
+@bot.component("remove_role_menu")
+async def remove_role_menu_handler(ctx: SlashContext, values: list):
+    member = ctx.author
+    guild = ctx.guild
+    for role_id in values:
+        role = discord.utils.get(guild.roles, id=int(role_id))
+        if role:
+            await member.remove_roles(role)
+            await ctx.send(f"Role {role.name} removed from {member.display_name}")
+        else:
+            await ctx.send(f"Role with ID {role_id} not found")
 
 @slash.slash(name="create_notification", description="Make a notification for a set time", options=[
                 SelectOption("January", "january"),

@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext
+from discord_slash import SlashCommand, SlashContext, SelectMenu, SelectOption
+
 
 # Initialize the bot with a command prefix
 bot = commands.Bot(command_prefix="!")
@@ -42,6 +43,24 @@ async def removerole(ctx, member: discord.Member, role: discord.Role):
         await ctx.send(f'Successfully removed {role.name} from {member.display_name}')
     else:
         await ctx.send('I do not have permission to manage roles.')
+
+@slash.slash(name="create_notification", description="Make a notification for a set time", options=[
+                SelectOption("January", "january"),
+                SelectOption("February", "february"),
+                SelectOption("March", "march"),
+                SelectOption("April", "april"),
+                SelectOption("May", "may"),
+                SelectOption("June", "june"),
+                SelectOption("July", "july"),
+                SelectOption("August", "august"),
+                SelectOption("September", "september"),
+                SelectOption("October", "october"),
+                SelectOption("November", "november"),
+                SelectOption("December", "december")
+            ])
+async def createNotification(ctx, value: str):
+    await ctx.send(f"You selected: {value}")
+
 
 # Run the bot with the token
 bot.run('BOT_TOKEN')
